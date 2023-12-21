@@ -1,0 +1,14 @@
+{
+  "name": "quizz_site_be",
+  "version": "1.0.0",
+  "description": "quizz_site_be",
+  "main": "app.js",
+  "scripts": {
+    "test": "test"
+  },
+  "author": "fs",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+}
