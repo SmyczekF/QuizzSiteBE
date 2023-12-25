@@ -17,13 +17,14 @@ app.use(session({
 
 // development only
 app.use(cors({
-  origin: 'http://localhost:3000'
+  origin: 'http://localhost:3000',
+  credentials: true
 }));
 
 const sequelize = require('./database/sequelize-initializer');
 
 
-sequelize.sync().then(() => {
+sequelize.sync({force: true}).then(() => {
   console.log(`Database & tables created!`)
 })
 

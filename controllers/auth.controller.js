@@ -88,7 +88,7 @@ const activate = async function(req, res){
         user.activated = true
         user.activation_token = null
         await user.save()
-        res.send('User activated')
+        res.redirect('/')
     }else{
         res.status(404).send('User not found')
     }
