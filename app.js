@@ -3,6 +3,7 @@ const app = express()
 require('dotenv').config()
 const session = require('express-session');
 const bodyParser = require('body-parser')
+const cors = require('cors')
 
 app.use(bodyParser.urlencoded({ extended: false }))
 app.use(bodyParser.json())
@@ -12,6 +13,11 @@ app.use(session({
   resave: false,
   saveUninitialized: true,
   cookie: { secure: true, maxAge: 60000 }
+}));
+
+// development only
+app.use(cors({
+  origin: 'http://localhost:3000'
 }));
 
 const sequelize = require('./database/sequelize-initializer');

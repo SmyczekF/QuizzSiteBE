@@ -19,6 +19,10 @@ const getUser = async function(req, res){
 }
 
 const createUser = async function(req, res){
+    if(req.body.username === undefined || req.body.email === undefined || req.body.password === undefined){
+        res.status(400).send('Bad request')
+        return
+    }
     const user = await sequelize.models.User.findOne({
         where: {
             email: req.body.email
@@ -42,6 +46,10 @@ const createUser = async function(req, res){
 }
 
 const updateUser = async function(req, res){
+    if(req.body.username === undefined || req.body.email === undefined || req.body.password === undefined){
+        res.status(400).send('Bad request')
+        return
+    }
     sequelize.models.User.update({
         username: req.body.username,
         email: req.body.email,
@@ -56,6 +64,10 @@ const updateUser = async function(req, res){
 }
 
 const deleteUser = async function(req, res){
+    if(req.params.userID === undefined){
+        res.status(400).send('Bad request')
+        return
+    }
     sequelize.models.User.destroy({
         where: {
             id: req.params.userID

@@ -4,6 +4,14 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 
 const login = async function(req, res){
+    if(req.session.user){
+        res.send(req.session.user)
+        return
+    }
+    if(req.body.username === undefined || req.body.password === undefined){
+        res.status(400).send('Bad request')
+        return
+    }
     const user = await sequelize.models.User.findOne({
         where: {
             username: req.body.username
@@ -12,10 +20,13 @@ const login = async function(req, res){
 
     if(user){
         const match = await bcrypt.compare(req.body.password, user.password)
-        if(match){
+        if(match && user.activated){
             req.session.user = user
             res.send(user)
-        }else{
+        }else if(!user.activated){
+            res.status(401).send('User not activated')
+        }
+        else{
             res.status(401).send('Incorrect password')
         }
     }else{
@@ -24,11 +35,23 @@ const login = async function(req, res){
 }
 
 const logout = async function(req, res){
+    if(!req.session){
+        res.status(400).send('Bad request')
+        return
+    }
+    if(!req.session.user){
+        res.status(401).send('Not logged in')
+        return
+    }
     req.session.destroy()
     res.send('Logged out')
 }
 
 const register = async function(req, res){
+    if(req.body.username === undefined || req.body.email === undefined || req.body.password === undefined){
+        res.status(400).send('Bad request')
+        return
+    }
     const user = await sequelize.models.User.findOne({
         where: {
             email: req.body.email
@@ -50,6 +73,10 @@ const register = async function(req, res){
 }
 
 const activate = async function(req, res){
+    if(req.params.username === undefined || req.params.token === undefined){
+        res.status(400).send('Bad request')
+        return
+    }
     const user = await sequelize.models.User.findOne({
         where: {
             username: req.params.username,
@@ -68,11 +95,14 @@ const activate = async function(req, res){
 }
 
 const sendActivationEmail = async function(req, res){
+    if(req.body.email === undefined){
+        res.status(400).send('Bad request')
+        return
+    }
     if(req.session.lastSentTimestamp && Date.now() - req.session.lastSentTimestamp < 60000){
         res.status(429).send('Too many requests, please wait 30s')
         return
     }
-    console.log(req.body)
     const user = await sequelize.models.User.findOne({
         where: {
             email: req.body.email
@@ -112,6 +142,10 @@ const sendActivationEmail = async function(req, res){
 }
 
 const sendPasswordResetEmail = async function(req, res){
+    if(req.body.email === undefined){
+        res.status(400).send('Bad request')
+        return
+    }
     const user = await sequelize.models.User.findOne({
         where: {
             email: req.body.email
@@ -149,6 +183,10 @@ const sendPasswordResetEmail = async function(req, res){
 }
 
 const resetPassword = async function(req, res){
+    if(req.params.username === undefined || req.params.token === undefined || req.body.password === undefined){
+        res.status(400).send('Bad request')
+        return
+    }
     const user = await sequelize.models.User.findOne({
         where: {
             username: req.params.username,
