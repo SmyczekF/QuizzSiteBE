@@ -23,6 +23,7 @@ sequelize.sync().then(() => {
 
 app.use('/', express.static('build'))
 app.use('/users', require('./routes/user.routes'))
+app.use('/auth', require('./routes/auth.routes'))
 app.get('/api', (req, res) => res.send('Hello World!'))
 
 app.listen(8080, () => console.log('Example app listening on port 8080!'))

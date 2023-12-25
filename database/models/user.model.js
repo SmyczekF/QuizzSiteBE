@@ -16,10 +16,27 @@ module.exports = (sequelize) => {
 				is: /^\w{3,}$/
 			}
 		},
-    password: {
-      allowNull: false,
-      type: DataTypes.STRING
-    },
+		email: {
+			allowNull: false,
+			type: DataTypes.STRING,
+			unique: true,
+			validate: {
+				isEmail: true
+			}
+		},
+		password: {
+			allowNull: false,
+			type: DataTypes.STRING
+		},
+		activated: {
+			allowNull: false,
+			type: DataTypes.BOOLEAN,
+			defaultValue: false
+		},
+		activation_token: {
+			allowNull: true,
+			type: DataTypes.STRING
+		},
     
 	},
   {
