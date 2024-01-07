@@ -12,7 +12,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: true, maxAge: 60000 }
+  cookie: { secure: false, maxAge: 60000 }
 }));
 
 // development only
@@ -24,7 +24,7 @@ app.use(cors({
 const sequelize = require('./database/sequelize-initializer');
 
 
-sequelize.sync({force: true}).then(() => {
+sequelize.sync().then(() => {
   console.log(`Database & tables created!`)
 })
 

@@ -5,7 +5,7 @@ const crypto = require('crypto');
 
 const login = async function(req, res){
     if(req.session.user){
-        res.send(req.session.user)
+        res.send({username: req.session.user.username})
         return
     }
     if(req.body.username === undefined || req.body.password === undefined){
@@ -22,7 +22,7 @@ const login = async function(req, res){
         const match = await bcrypt.compare(req.body.password, user.password)
         if(match && user.activated){
             req.session.user = user
-            res.send(user)
+            res.send({username: user.username})
         }else if(!user.activated){
             res.status(401).send('User not activated')
         }
@@ -31,6 +31,14 @@ const login = async function(req, res){
         }
     }else{
         res.status(404).send('User with that username does not exist')
+    }
+}
+
+const getLoggedUser = async function(req, res){
+    if(req.session.user){
+        res.send({username: req.session.user.username})
+    }else{
+        res.status(401).send('Not logged in')
     }
 }
 
@@ -212,5 +220,6 @@ module.exports = {
     activate,
     sendActivationEmail,
     sendPasswordResetEmail,
-    resetPassword
+    resetPassword,
+    getLoggedUser
 }
