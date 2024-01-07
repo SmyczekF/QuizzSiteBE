@@ -12,7 +12,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: false, maxAge: 60000 }
+  cookie: { secure: false, maxAge: 6000000 }
 }));
 
 // development only
@@ -31,6 +31,6 @@ sequelize.sync().then(() => {
 app.use('/', express.static('build'))
 app.use('/users', require('./routes/user.routes'))
 app.use('/auth', require('./routes/auth.routes'))
-app.get('/api', (req, res) => res.send('Hello World!'))
+app.use('/translations', require('./routes/translation.routes'))
 
 app.listen(8080, () => console.log('Example app listening on port 8080!'))
