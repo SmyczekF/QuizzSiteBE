@@ -8,7 +8,8 @@ const modelDefiners = [
     require('./models/quiz.model'),
     require('./models/question.model'),
     require('./models/option.model'),
-    require('./models/translation.model')
+    require('./models/translation.model'),
+    require('./models/genre.model')
 ];
 
 for (const modelDefiner of modelDefiners) {
