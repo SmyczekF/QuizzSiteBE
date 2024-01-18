@@ -2,11 +2,20 @@ const sequelize = require('../database/sequelize-initializer');
 
 const getAll = async function(req, res){
     try{
-        sequelize.models.Quiz.findAll({
-            include: {model: sequelize.models.User, attributes: ['username']}
-        }).then(quizzes => {
-            res.send(quizzes)
-        })
+        const page = req.query.page || 1
+        const limit = req.query.limit || 10
+
+        const quizzes = await sequelize.models.Quiz.findAll({
+            include: {model: sequelize.models.User, attributes: ['username']},
+            offset: (page - 1) * limit,
+            limit: limit
+        });
+        const totalCount = await sequelize.models.Quiz.count()
+        
+        res.send({
+            quizzes: quizzes,
+            totalCount: totalCount
+        });
     } catch(err){
         console.log(err)
         res.status(500).send('Internal server error')
