@@ -4,212 +4,260 @@ const nodemailer = require('nodemailer');
 const crypto = require('crypto');
 
 const login = async function(req, res){
-    if(req.session.user){
-        res.send({username: req.session.user.username})
-        return
-    }
-    if(req.body.username === undefined || req.body.password === undefined){
-        res.status(400).send('Bad request')
-        return
-    }
-    const user = await sequelize.models.User.findOne({
-        where: {
-            username: req.body.username
+    try{
+        if(req.session.user){
+            res.send({username: req.session.user.username})
+            return
         }
-    })
+        if(req.body.username === undefined || req.body.password === undefined){
+            res.status(400).send('Bad request')
+            return
+        }
+        const user = await sequelize.models.User.findOne({
+            where: {
+                username: req.body.username
+            }
+        })
 
-    if(user){
-        const match = await bcrypt.compare(req.body.password, user.password)
-        if(match && user.activated){
-            req.session.user = user
-            res.send({username: user.username})
-        }else if(!user.activated){
-            res.status(401).send('User not activated')
+        if(user){
+            const match = await bcrypt.compare(req.body.password, user.password)
+            if(match && user.activated){
+                req.session.user = user
+                res.send({username: user.username})
+            }else if(!user.activated){
+                res.status(401).send('User not activated')
+            }
+            else{
+                res.status(401).send('Incorrect password')
+            }
+        }else{
+            res.status(404).send('User with that username does not exist')
         }
-        else{
-            res.status(401).send('Incorrect password')
-        }
-    }else{
-        res.status(404).send('User with that username does not exist')
+    }
+    catch(err){
+        console.log(err)
+        res.status(500).send('Internal server error')
     }
 }
 
 const getLoggedUser = async function(req, res){
-    if(req.session.user){
-        res.send({username: req.session.user.username})
-    }else{
-        res.status(401).send('Not logged in')
+    try{
+        if(req.session.user){
+            res.send({username: req.session.user.username})
+        }else{
+            res.status(401).send('Not logged in')
+        }
+    }
+    catch(err){
+        console.log(err)
+        res.status(500).send('Internal server error')
     }
 }
 
 const logout = async function(req, res){
-    if(!req.session){
-        res.status(400).send('Bad request')
-        return
+    try{
+        if(!req.session){
+            res.status(400).send('Bad request')
+            return
+        }
+        if(!req.session.user){
+            res.status(401).send('Not logged in')
+            return
+        }
+        req.session.destroy()
+        res.send('Logged out')
     }
-    if(!req.session.user){
-        res.status(401).send('Not logged in')
-        return
+    catch(err){
+        console.log(err)
+        res.status(500).send('Internal server error')
     }
-    req.session.destroy()
-    res.send('Logged out')
 }
 
 const register = async function(req, res){
-    if(req.body.username === undefined || req.body.email === undefined || req.body.password === undefined){
-        res.status(400).send('Bad request')
-        return
-    }
-    const user = await sequelize.models.User.findOne({
-        where: {
-            email: req.body.email
+    try{
+        if(req.body.username === undefined || req.body.email === undefined || req.body.password === undefined){
+            res.status(400).send('Bad request')
+            return
         }
-    })
-
-    if(user){
-        res.status(409).send('User with that email already exists')
-    }else{
-        const hash = await bcrypt.hash(req.body.password, 10)
-        const newUser = await sequelize.models.User.create({
-            username: req.body.username,
-            email: req.body.email,
-            password: hash,
-            activation_token: crypto.randomBytes(32).toString('hex')
+        const user = await sequelize.models.User.findOne({
+            where: {
+                email: req.body.email
+            }
         })
-        res.send(newUser)
+
+        if(user){
+            res.status(409).send('User with that email already exists')
+        }else{
+            const hash = await bcrypt.hash(req.body.password, 10)
+            const newUser = await sequelize.models.User.create({
+                username: req.body.username,
+                email: req.body.email,
+                password: hash,
+                activation_token: crypto.randomBytes(32).toString('hex')
+            })
+            res.send(newUser)
+        }
+    }
+    catch(err){
+        console.log(err)
+        res.status(500).send('Internal server error')
     }
 }
 
 const activate = async function(req, res){
-    if(req.params.username === undefined || req.params.token === undefined){
-        res.status(400).send('Bad request')
-        return
-    }
-    const user = await sequelize.models.User.findOne({
-        where: {
-            username: req.params.username,
-            activation_token: req.params.token
+    try{
+        if(req.params.username === undefined || req.params.token === undefined){
+            res.status(400).send('Bad request')
+            return
         }
-    })
+        const user = await sequelize.models.User.findOne({
+            where: {
+                username: req.params.username,
+                activation_token: req.params.token
+            }
+        })
 
-    if(user){
-        user.activated = true
-        user.activation_token = null
-        await user.save()
-        res.redirect('/')
-    }else{
-        res.status(404).send('User not found')
+        if(user){
+            user.activated = true
+            user.activation_token = null
+            await user.save()
+            res.redirect('/')
+        }else{
+            res.status(404).send('User not found')
+        }
+    }
+    catch(err){
+        console.log(err)
+        res.status(500).send('Internal server error')
     }
 }
 
 const sendActivationEmail = async function(req, res){
-    if(req.body.email === undefined){
-        res.status(400).send('Bad request')
-        return
-    }
-    if(req.session.lastSentTimestamp && Date.now() - req.session.lastSentTimestamp < 60000){
-        res.status(429).send('Too many requests, please wait 30s')
-        return
-    }
-    const user = await sequelize.models.User.findOne({
-        where: {
-            email: req.body.email
+    try{
+        if(req.body.email === undefined){
+            res.status(400).send('Bad request')
+            return
         }
-    })
-
-    if(user){
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USERNAME,
-                pass: process.env.EMAIL_PASSWORD
+        if(req.session.lastSentTimestamp && Date.now() - req.session.lastSentTimestamp < 60000){
+            res.status(429).send('Too many requests, please wait 30s')
+            return
+        }
+        const user = await sequelize.models.User.findOne({
+            where: {
+                email: req.body.email
             }
         })
 
-        const mailOptions = {
-            from: `Quizz World <process.env.EMAIL_USERNAME>`,
-            to: user.email,
-            subject: 'Account activation',
-            text: `Hello ${user.username},\n\nPlease activate your account by clicking the following link:\n\n${process.env.SITE_ADDRESS}/auth/activate/${user.username}/${user.activation_token}`,
-            html: require('../email-templates/confirm-email-message')(user)
-        }
+        if(user){
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.EMAIL_USERNAME,
+                    pass: process.env.EMAIL_PASSWORD
+                }
+            })
 
-        transporter.sendMail(mailOptions, (error, info) => {
-            if(error){
-                console.log(error)
-            }else{
-                console.log('Email sent: ' + info.response)
+            const mailOptions = {
+                from: `Quizz World <process.env.EMAIL_USERNAME>`,
+                to: user.email,
+                subject: 'Account activation',
+                text: `Hello ${user.username},\n\nPlease activate your account by clicking the following link:\n\n${process.env.SITE_ADDRESS}/auth/activate/${user.username}/${user.activation_token}`,
+                html: require('../email-templates/confirm-email-message')(user)
             }
-        })
-        
-        req.session.lastSentTimestamp = Date.now()
-        res.send('Email sent')
-    }else{
-        res.status(404).send('User not found')
+
+            transporter.sendMail(mailOptions, (error, info) => {
+                if(error){
+                    console.log(error)
+                }else{
+                    console.log('Email sent: ' + info.response)
+                }
+            })
+            
+            req.session.lastSentTimestamp = Date.now()
+            res.send('Email sent')
+        }else{
+            res.status(404).send('User not found')
+        }
+    }
+    catch(err){
+        console.log(err)
+        res.status(500).send('Internal server error')
     }
 }
 
 const sendPasswordResetEmail = async function(req, res){
-    if(req.body.email === undefined){
-        res.status(400).send('Bad request')
-        return
+    try{
+        if(req.body.email === undefined){
+            res.status(400).send('Bad request')
+            return
+        }
+        const user = await sequelize.models.User.findOne({
+            where: {
+                email: req.body.email
+            }
+        })
+
+        if(user){
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.EMAIL_USERNAME,
+                    pass: process.env.EMAIL_PASSWORD
+                }
+            })
+
+            const mailOptions = {
+                from: process.env.EMAIL_USERNAME,
+                to: user.email,
+                subject: 'Password reset',
+                text: `Hello ${user.username},\n\nPlease reset your password by clicking the following link:\n\n${process.env.SITE_ADDRESS}/auth/reset-password/${user.username}/${user.activation_token}`
+            }
+
+            transporter.sendMail(mailOptions, (error, info) => {
+                if(error){
+                    console.log(error)
+                }else{
+                    console.log('Email sent: ' + info.response)
+                }
+            })
+
+            res.send('Email sent')
+        }else{
+            res.status(404).send('User not found')
+        }
     }
-    const user = await sequelize.models.User.findOne({
-        where: {
-            email: req.body.email
-        }
-    })
-
-    if(user){
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.EMAIL_USERNAME,
-                pass: process.env.EMAIL_PASSWORD
-            }
-        })
-
-        const mailOptions = {
-            from: process.env.EMAIL_USERNAME,
-            to: user.email,
-            subject: 'Password reset',
-            text: `Hello ${user.username},\n\nPlease reset your password by clicking the following link:\n\n${process.env.SITE_ADDRESS}/auth/reset-password/${user.username}/${user.activation_token}`
-        }
-
-        transporter.sendMail(mailOptions, (error, info) => {
-            if(error){
-                console.log(error)
-            }else{
-                console.log('Email sent: ' + info.response)
-            }
-        })
-
-        res.send('Email sent')
-    }else{
-        res.status(404).send('User not found')
+    catch(err){
+        console.log(err)
+        res.status(500).send('Internal server error')
     }
 }
 
 const resetPassword = async function(req, res){
-    if(req.params.username === undefined || req.params.token === undefined || req.body.password === undefined){
-        res.status(400).send('Bad request')
-        return
-    }
-    const user = await sequelize.models.User.findOne({
-        where: {
-            username: req.params.username,
-            activation_token: req.params.token
+    try{
+        if(req.params.username === undefined || req.params.token === undefined || req.body.password === undefined){
+            res.status(400).send('Bad request')
+            return
         }
-    })
+        const user = await sequelize.models.User.findOne({
+            where: {
+                username: req.params.username,
+                activation_token: req.params.token
+            }
+        })
 
-    if(user){
-        const hash = await bcrypt.hash(req.body.password, 10)
-        user.password = hash
-        user.activation_token = null
-        await user.save()
-        res.send('Password reset')
-    }else{
-        res.status(404).send('User not found')
+        if(user){
+            const hash = await bcrypt.hash(req.body.password, 10)
+            user.password = hash
+            user.activation_token = null
+            await user.save()
+            res.send('Password reset')
+        }else{
+            res.status(404).send('User not found')
+        }
+    }
+    catch(err){
+        console.log(err)
+        res.status(500).send('Internal server error')
     }
 }
 

@@ -12,7 +12,7 @@ app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
   saveUninitialized: true,
-  cookie: { secure: false, maxAge: 6000000 }
+  cookie: { secure: false, maxAge: 1000 * 60 * 60 * 24}
 }));
 
 // development only
@@ -32,5 +32,6 @@ app.use('/', express.static('build'))
 app.use('/users', require('./routes/user.routes'))
 app.use('/auth', require('./routes/auth.routes'))
 app.use('/translations', require('./routes/translation.routes'))
+app.use('/quizz', require('./routes/quiz.routes'))
 
 app.listen(8080, () => console.log('Example app listening on port 8080!'))
