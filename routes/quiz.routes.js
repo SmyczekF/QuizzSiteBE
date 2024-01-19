@@ -9,13 +9,13 @@ const  {
     deleteQuiz 
 } = require('../controllers/quiz.controller.js')
 
-router.get('/get/', getAll)
+router.get('/get/:genreName', getAll)
 
 router.get('/get/:quizID', get)
 
 router.post('/add/', createQuiz) 
 
-router.put('/update/:quizID', updateQuiz) 
+router.post('/update/:quizID', updateQuiz) 
 
 router.delete('/delete/:quizID', deleteQuiz)
 
