@@ -51,7 +51,7 @@ const get = async function(req, res){
                     model: sequelize.models.Option, attributes: ['text', 'order', 'image']}
                 },
                 {model: sequelize.models.User, attributes: ['username']},
-                {model: sequelize.models.Genre, attributes: ['name']}
+                {model: sequelize.models.Genre, attributes: ['name'], through: {attributes: []}}
             ]
         })
         if(quiz){

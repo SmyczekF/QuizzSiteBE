@@ -23,7 +23,7 @@ app.use(cors({
 
 const sequelize = require('./database/sequelize-initializer');
 
-sequelize.sync({force: true}).then(() => {
+sequelize.sync().then(() => {
   console.log(`Database & tables created!`)
 })
 

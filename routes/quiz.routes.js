@@ -9,7 +9,7 @@ const  {
     deleteQuiz 
 } = require('../controllers/quiz.controller.js')
 
-router.get('/get/:genreName', getAll)
+router.get('/get/genre/:genreName', getAll)
 
 router.get('/get/:quizID', get)
 
