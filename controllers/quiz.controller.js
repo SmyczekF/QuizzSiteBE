@@ -2,6 +2,7 @@ const sequelize = require('../database/sequelize-initializer');
 
 const getAll = async function(req, res){
     try{
+        const order = req.query.order || ['finished', 'DESC'];
         const genreName = req.params.genreName;
         const page = req.query.page || 1
         const limit = req.query.limit || 10
@@ -17,7 +18,8 @@ const getAll = async function(req, res){
                 }
             ],
             offset: (page - 1) * limit,
-            limit: limit
+            limit: limit,
+            order: [order]
         });
         const totalCount = await sequelize.models.Quiz.count({
             include: {
