@@ -9,7 +9,7 @@ const getAll = async function(req, res){
 
         const quizzes = await sequelize.models.Quiz.findAll({
             include: [
-                {model: sequelize.models.User, attributes: ['username']},
+                {model: sequelize.models.User, attributes: ['username', 'image']},
                 {
                     model: sequelize.models.Genre,
                     where: {name: genreName},
@@ -52,7 +52,7 @@ const get = async function(req, res){
                 {model: sequelize.models.Question, include: {
                     model: sequelize.models.Option, attributes: ['text', 'order', 'image']}
                 },
-                {model: sequelize.models.User, attributes: ['username']},
+                {model: sequelize.models.User, attributes: ['username', 'image']},
                 {model: sequelize.models.Genre, attributes: ['name'], through: {attributes: []}}
             ]
         })

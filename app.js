@@ -33,4 +33,4 @@ app.use('/auth', require('./routes/auth.routes'))
 app.use('/translations', require('./routes/translation.routes'))
 app.use('/quizz', require('./routes/quiz.routes'))
 
-app.listen(8080, () => console.log('Example app listening on port 8080!'))
+app.listen(8080, () => console.log('App listening on port 8080!'))
