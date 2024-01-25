@@ -6,7 +6,8 @@ const  {
     get,
     createQuiz,
     updateQuiz,
-    deleteQuiz 
+    deleteQuiz,
+    validateAnswers
 } = require('../controllers/quiz.controller.js')
 
 router.get('/get/genre/:genreName', getAll)
@@ -18,5 +19,7 @@ router.post('/add/', createQuiz)
 router.post('/update/:quizID', updateQuiz) 
 
 router.delete('/delete/:quizID', deleteQuiz)
+
+router.post('/finish/:quizID', validateAnswers)
 
 module.exports = router

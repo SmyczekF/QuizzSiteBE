@@ -222,10 +222,87 @@ const deleteQuiz = async function(req, res){
     }
 }
 
+const calculateScore = function(answers, correctAnswers){
+    let score = 0;
+    answers.forEach(answer => {
+        const correctAnswer = correctAnswers.find(correctAnswer => correctAnswer.questionId === answer.questionId);
+        if(!correctAnswer){
+            return 0;
+        }
+        if(correctAnswer.answerId){
+            if(answer.answerId === correctAnswer.answerId){
+                score++;
+            }
+        }else{
+            const correctAnswerIds = correctAnswer.answerIds;
+            const answerIds = answer.answerIds;
+            let tempScore = 0;
+            answerIds.forEach(answerId => {
+                if(correctAnswerIds.includes(answerId)){
+                    tempScore++;
+                }
+                else{
+                    tempScore--;
+                }
+            })
+            if(tempScore < 0){
+                tempScore = 0;
+            }
+            score += tempScore / correctAnswerIds.length;
+        }
+    })
+    return score / correctAnswers.length * 100;
+}
+
+const validateAnswers = async function(req, res){
+    try{
+        if(req.params.quizID === undefined){
+            res.status(400).send('Bad request')
+            return
+        }
+        const quiz = await sequelize.models.Quiz.findOne({
+            where: {
+                id: req.params.quizID
+            },
+            include: [
+                {model: sequelize.models.Question, include: {
+                    model: sequelize.models.Option, attributes: ['id', 'isCorrect']}
+                },
+            ]
+        })
+        if(quiz){
+            const questions = quiz.Questions;
+            // answers = [{questionId: number, answerId: number, answerIds: number[]}]
+            const answers = req.body.answers;
+            const correctAnswers = [];
+            questions.forEach(question => {
+                if(question.type === 'single_choice'){
+                    const correctAnswer = question.Options.find(option => option.isCorrect === true);
+                    correctAnswers.push({questionId: question.id, answerId: correctAnswer.id, answerIds: []});
+                }
+                else if(question.type === 'multiple_choice'){
+                    const correctAnswersForQuestion = question.Options.filter(option => option.isCorrect === true);
+                    const correctAnswerIds = correctAnswersForQuestion.map(option => option.id);
+                    correctAnswers.push({questionId: question.id, answerId: null, answerIds: correctAnswerIds});
+                }
+            })
+            const score = calculateScore(answers, correctAnswers);
+            res.send({score: score, correctAnswers: correctAnswers});
+        }else{
+            res.status(404).send('Quiz not found')
+        }
+    }
+    catch(err){
+        console.log(err)
+        res.status(500).send('Internal server error')
+    }
+}
+
 module.exports = {
     getAll,
     get,
     createQuiz,
     updateQuiz,
-    deleteQuiz
+    deleteQuiz,
+    validateAnswers
 }
