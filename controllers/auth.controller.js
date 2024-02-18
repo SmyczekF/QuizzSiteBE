@@ -43,7 +43,7 @@ const login = async function(req, res){
 const getLoggedUser = async function(req, res){
     try{
         if(req.session.user){
-            res.send({username: req.session.user.username})
+            res.send({username: req.session.user.username, email: req.session.user.email, image: req.session.user.image})
         }else{
             res.status(401).send('Not logged in')
         }
