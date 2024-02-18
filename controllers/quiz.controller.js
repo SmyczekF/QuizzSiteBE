@@ -287,6 +287,11 @@ const validateAnswers = async function(req, res){
                 }
             })
             const score = calculateScore(answers, correctAnswers);
+            await sequelize.models.Quiz.update({finished: quiz.finished + 1}, {
+                where: {
+                    id: req.params.quizID
+                }
+            })
             res.send({score: score, correctAnswers: correctAnswers});
         }else{
             res.status(404).send('Quiz not found')
