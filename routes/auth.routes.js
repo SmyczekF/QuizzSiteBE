@@ -9,7 +9,8 @@ const  {
     sendActivationEmail,
     sendPasswordResetEmail,
     resetPassword,
-    getLoggedUser
+    getLoggedUser,
+    changeLoggedUserUsername
 } = require('../controllers/auth.controller.js')
 
 router.post('/login', login)
@@ -27,5 +28,7 @@ router.post('/sendPasswordResetEmail', sendPasswordResetEmail)
 router.post('/resetPassword/:username/:token', resetPassword)
 
 router.get('/getLoggedUser', getLoggedUser)
+
+router.post('/changeLoggedUserUsername', changeLoggedUserUsername)
 
 module.exports = router

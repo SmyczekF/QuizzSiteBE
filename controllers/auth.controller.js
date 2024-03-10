@@ -261,6 +261,41 @@ const resetPassword = async function(req, res){
     }
 }
 
+const changeLoggedUserUsername = async function(req, res){
+    try{
+        if(req.body.username === undefined){
+            res.status(400).send('Bad request')
+            return
+        }
+        if(req.session.user === undefined){
+            res.status(401).send('Unauthorized')
+            return
+        }
+        if(await sequelize.models.User.findOne({
+            where: {
+                username: req.body.username
+            }
+        })){
+            res.status(409).send('Username already exists')
+            return
+        }
+        sequelize.models.User.update({
+            username: req.body.username
+        }, {
+            where: {
+                id: req.session.user.id
+            }
+        }).then(user => {
+            req.session.user.username = req.body.username
+            res.send(user)
+        })
+    }
+    catch(err){
+        console.log(err)
+        res.status(500).send('Internal server error')
+    }
+}
+
 module.exports = {
     login,
     logout,
@@ -269,5 +304,6 @@ module.exports = {
     sendActivationEmail,
     sendPasswordResetEmail,
     resetPassword,
-    getLoggedUser
+    getLoggedUser,
+    changeLoggedUserUsername
 }
