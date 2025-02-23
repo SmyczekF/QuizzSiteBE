@@ -25,6 +25,12 @@ const getUserHistory = async function (req, res) {
             "finished",
             "color",
           ],
+          include: [
+            {
+              model: sequelize.models.User,
+              attributes: ["username"],
+            },
+          ],
         },
       ],
       offset: (page - 1) * limit,

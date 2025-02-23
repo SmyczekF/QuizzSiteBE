@@ -344,6 +344,39 @@ const validateAnswers = async function (req, res) {
   }
 };
 
+const getQuizByUser = async function (req, res) {
+  try {
+    if (!req.session || !req.session.user) {
+      res.status(401).send("Not logged in");
+      return;
+    }
+    const UserId = req.session.user.id;
+    const page = req.query.page || 1;
+    const limit = req.query.limit || 10;
+
+    const userQuizzes = await sequelize.models.Quiz.findAll({
+      where: {
+        UserId: UserId,
+      },
+      include: [
+        {
+          model: sequelize.models.Genre,
+          attributes: ["name"],
+          through: { attributes: [] },
+        },
+      ],
+      offset: (page - 1) * limit,
+      limit: limit,
+      order: [["createdAt", "DESC"]],
+    });
+
+    res.send(userQuizzes);
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Internal server error");
+  }
+};
+
 module.exports = {
   getAll,
   get,
@@ -351,4 +384,5 @@ module.exports = {
   updateQuiz,
   deleteQuiz,
   validateAnswers,
+  getQuizByUser,
 };

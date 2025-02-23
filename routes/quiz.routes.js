@@ -1,25 +1,28 @@
-const express = require('express')
-const router = express.Router()
+const express = require("express");
+const router = express.Router();
 
-const  { 
-    getAll,
-    get,
-    createQuiz,
-    updateQuiz,
-    deleteQuiz,
-    validateAnswers
-} = require('../controllers/quiz.controller.js')
+const {
+  getAll,
+  get,
+  createQuiz,
+  updateQuiz,
+  deleteQuiz,
+  validateAnswers,
+  getQuizByUser,
+} = require("../controllers/quiz.controller.js");
 
-router.get('/get/genre/:genreName', getAll)
+router.get("/get/genre/:genreName", getAll);
 
-router.get('/get/:quizID', get)
+router.get("/get/:quizID", get);
 
-router.post('/add/', createQuiz) 
+router.post("/add/", createQuiz);
 
-router.post('/update/:quizID', updateQuiz) 
+router.post("/update/:quizID", updateQuiz);
 
-router.delete('/delete/:quizID', deleteQuiz)
+router.delete("/:quizID", deleteQuiz);
 
-router.post('/finish/:quizID', validateAnswers)
+router.post("/finish/:quizID", validateAnswers);
 
-module.exports = router
+router.get("/myQuizzes", getQuizByUser);
+
+module.exports = router;
