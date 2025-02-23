@@ -325,6 +325,15 @@ const validateAnswers = async function (req, res) {
           },
         }
       );
+      // Save the score to the database
+      if (req.session.user) {
+        await sequelize.models.QuizHistory.create({
+          score: score,
+          QuizId: quiz.id,
+          UserId: req.session.user.id,
+          finishedOn: new Date(),
+        });
+      }
       res.send({ score: score, correctAnswers: correctAnswers });
     } else {
       res.status(404).send("Quiz not found");
