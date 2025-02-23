@@ -1,15 +1,20 @@
 function applyAssociations(sequelize) {
-	const { User, Quiz, Option, Question, Translation, Genre } = sequelize.models;
+  const { User, Quiz, Option, Question, Translation, Genre, QuizHistory } =
+    sequelize.models;
 
-    Question.hasMany(Option);
-    Quiz.hasMany(Question);
-    Quiz.belongsTo(User);
-    Translation.belongsToMany(Quiz, { through: 'TranslationQuiz' });
-    Quiz.belongsToMany(Translation, { through: 'TranslationQuiz' });
-    Translation.hasOne(Question);
-    Translation.hasOne(Option);
-    Genre.belongsToMany(Quiz, { through: 'GenreQuiz' });
-    Quiz.belongsToMany(Genre, { through: 'GenreQuiz' });
+  Question.hasMany(Option);
+  Quiz.hasMany(Question);
+  Quiz.belongsTo(User);
+  Translation.belongsToMany(Quiz, { through: "TranslationQuiz" });
+  Quiz.belongsToMany(Translation, { through: "TranslationQuiz" });
+  Translation.hasOne(Question);
+  Translation.hasOne(Option);
+  Genre.belongsToMany(Quiz, { through: "GenreQuiz" });
+  Quiz.belongsToMany(Genre, { through: "GenreQuiz" });
+  QuizHistory.belongsTo(User);
+  QuizHistory.belongsTo(Quiz);
+  User.hasMany(QuizHistory);
+  Quiz.hasMany(QuizHistory);
 }
 
 module.exports = { applyAssociations };
