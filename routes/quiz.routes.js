@@ -11,6 +11,7 @@ const {
   getQuizByUser,
   getQuizFinishes,
   getQuizLikes,
+  like,
 } = require("../controllers/quiz.controller.js");
 
 router.get("/get/genre/:genreName", getAll);
@@ -30,5 +31,7 @@ router.get("/finished", getQuizFinishes);
 router.get("liked", getQuizLikes);
 
 router.get("/myQuizzes", getQuizByUser);
+
+router.post("/like/:quizID", like);
 
 module.exports = router;

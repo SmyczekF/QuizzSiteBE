@@ -7,6 +7,7 @@ const getAll = async function (req, res) {
     const genreName = req.params.genreName;
     const page = req.query.page || 1;
     const limit = req.query.limit || 10;
+    const UserId = req.session?.user?.id;
 
     const quizzes = await sequelize.models.Quiz.findAll({
       include: [
@@ -43,6 +44,15 @@ const getAll = async function (req, res) {
             WHERE "Likes"."QuizId" = "Quiz"."id"
           )`),
           "likeCount",
+        ],
+        [
+          sequelize.literal(`(
+            SELECT COUNT(*) > 0
+            FROM "Likes"
+            WHERE "Likes"."QuizId" = "Quiz"."id"
+            AND "Likes"."UserId" = ${UserId || 0}
+          )`),
+          "liked",
         ],
       ],
       group: [
@@ -462,6 +472,43 @@ const getQuizLikes = async function (req, res) {
   }
 };
 
+const like = async function (req, res) {
+  try {
+    if (!req.session || !req.session.user) {
+      res.status(401).send("Not logged in");
+      return;
+    }
+    const UserId = req.session.user.id;
+    const QuizId = req.params.quizID;
+
+    const like = await sequelize.models.Like.findOne({
+      where: {
+        UserId: UserId,
+        QuizId: QuizId,
+      },
+    });
+
+    if (like) {
+      await sequelize.models.Like.destroy({
+        where: {
+          UserId: UserId,
+          QuizId: QuizId,
+        },
+      });
+      res.send("Unliked");
+    } else {
+      await sequelize.models.Like.create({
+        UserId: UserId,
+        QuizId: QuizId,
+      });
+      res.send("Liked");
+    }
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Internal server error");
+  }
+};
+
 module.exports = {
   getAll,
   get,
@@ -472,4 +519,5 @@ module.exports = {
   getQuizByUser,
   getQuizFinishes,
   getQuizLikes,
+  like,
 };

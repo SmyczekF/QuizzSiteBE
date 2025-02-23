@@ -17,18 +17,12 @@ const getUserHistory = async function (req, res) {
       include: [
         {
           model: sequelize.models.Quiz,
-          attributes: [
-            "id",
-            "title",
-            "description",
-            "liked",
-            "finished",
-            "color",
-          ],
+          attributes: ["id", "title", "description", "color"],
           include: [
             {
               model: sequelize.models.User,
-              attributes: ["username"],
+              as: "Author",
+              attributes: ["username", "image"],
             },
           ],
         },
