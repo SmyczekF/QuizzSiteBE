@@ -21,16 +21,6 @@ module.exports = (sequelize) => {
       allowNull: true,
       type: DataTypes.BLOB("long"),
     },
-    liked: {
-      allowNull: false,
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-    },
-    finished: {
-      allowNull: false,
-      type: DataTypes.INTEGER,
-      defaultValue: 0,
-    },
     color: {
       allowNull: false,
       type: DataTypes.STRING,

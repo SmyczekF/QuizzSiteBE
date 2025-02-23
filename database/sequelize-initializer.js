@@ -11,6 +11,7 @@ const modelDefiners = [
   require("./models/translation.model"),
   require("./models/genre.model"),
   require("./models/quizHistory.model"),
+  require("./models/like.model"),
 ];
 
 for (const modelDefiner of modelDefiners) {

@@ -2,25 +2,76 @@ const sequelize = require("../database/sequelize-initializer");
 
 const getAll = async function (req, res) {
   try {
-    const order = req.query.order || ["finished", "DESC"];
+    const orderBy = req.query.order || "finished";
+    const orderDir = req.query.orderDir || "DESC";
     const genreName = req.params.genreName;
     const page = req.query.page || 1;
     const limit = req.query.limit || 10;
 
     const quizzes = await sequelize.models.Quiz.findAll({
       include: [
-        { model: sequelize.models.User, attributes: ["username", "image"] },
+        {
+          model: sequelize.models.User,
+          as: "Author",
+          attributes: ["username", "image"],
+        },
         {
           model: sequelize.models.Genre,
           where: { name: genreName },
-          attributes: [], // Exclude Genre attributes from the result
-          through: { attributes: [] }, // Exclude many-to-many relation attributes
+          attributes: [],
+          through: { attributes: [] },
         },
+      ],
+      attributes: [
+        "id",
+        "title",
+        "description",
+        "color",
+        "createdAt",
+        [
+          sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM "QuizHistories"
+            WHERE "QuizHistories"."QuizId" = "Quiz"."id"
+          )`),
+          "finishCount",
+        ],
+        [
+          sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM "Likes"
+            WHERE "Likes"."QuizId" = "Quiz"."id"
+          )`),
+          "likeCount",
+        ],
+      ],
+      group: [
+        "Quiz.id",
+        "Quiz.title",
+        "Quiz.description",
+        "Quiz.color",
+        "Quiz.createdAt",
+        "Author.id",
+        "Author.username",
+        "Author.image",
       ],
       offset: (page - 1) * limit,
       limit: limit,
-      order: [order],
+      order: [
+        [
+          sequelize.col(
+            orderBy === "finished"
+              ? "finishCount"
+              : orderBy === "likes"
+              ? "likeCount"
+              : "createdAt"
+          ),
+          orderDir,
+        ],
+      ],
+      subQuery: false,
     });
+
     const totalCount = await sequelize.models.Quiz.count({
       include: {
         model: sequelize.models.Genre,
@@ -56,7 +107,11 @@ const get = async function (req, res) {
             attributes: ["id", "text", "order", "image"],
           },
         },
-        { model: sequelize.models.User, attributes: ["username", "image"] },
+        {
+          model: sequelize.models.User,
+          as: "Author",
+          attributes: ["username", "image"],
+        },
         {
           model: sequelize.models.Genre,
           attributes: ["name"],
@@ -317,23 +372,13 @@ const validateAnswers = async function (req, res) {
         }
       });
       const score = calculateScore(answers, correctAnswers);
-      await sequelize.models.Quiz.update(
-        { finished: quiz.finished + 1 },
-        {
-          where: {
-            id: req.params.quizID,
-          },
-        }
-      );
       // Save the score to the database
-      if (req.session.user) {
-        await sequelize.models.QuizHistory.create({
-          score: score,
-          QuizId: quiz.id,
-          UserId: req.session.user.id,
-          finishedOn: new Date(),
-        });
-      }
+      await sequelize.models.QuizHistory.create({
+        score: score,
+        QuizId: quiz.id,
+        UserId: req.session?.user?.id || null,
+        finishedOn: new Date(),
+      });
       res.send({ score: score, correctAnswers: correctAnswers });
     } else {
       res.status(404).send("Quiz not found");
@@ -377,6 +422,46 @@ const getQuizByUser = async function (req, res) {
   }
 };
 
+const getQuizFinishes = async function (req, res) {
+  try {
+    if (req.params.quizID === undefined) {
+      res.status(400).send("Bad request");
+      return;
+    }
+
+    const finishes = await sequelize.models.QuizHistory.count({
+      where: {
+        QuizId: req.params.quizID,
+      },
+    });
+
+    res.send({ finishes });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Internal server error");
+  }
+};
+
+const getQuizLikes = async function (req, res) {
+  try {
+    if (req.params.quizID === undefined) {
+      res.status(400).send("Bad request");
+      return;
+    }
+
+    const likes = await sequelize.models.Like.count({
+      where: {
+        QuizId: req.params.quizID,
+      },
+    });
+
+    res.send({ likes });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Internal server error");
+  }
+};
+
 module.exports = {
   getAll,
   get,
@@ -385,4 +470,6 @@ module.exports = {
   deleteQuiz,
   validateAnswers,
   getQuizByUser,
+  getQuizFinishes,
+  getQuizLikes,
 };

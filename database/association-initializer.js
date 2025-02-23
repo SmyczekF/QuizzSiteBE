@@ -4,7 +4,8 @@ function applyAssociations(sequelize) {
 
   Question.hasMany(Option);
   Quiz.hasMany(Question);
-  Quiz.belongsTo(User);
+  Quiz.belongsTo(User, { as: "Author", foreignKey: "UserId" });
+  User.hasMany(Quiz, { as: "CreatedQuizzes", foreignKey: "UserId" });
   Translation.belongsToMany(Quiz, { through: "TranslationQuiz" });
   Quiz.belongsToMany(Translation, { through: "TranslationQuiz" });
   Translation.hasOne(Question);
@@ -15,6 +16,8 @@ function applyAssociations(sequelize) {
   QuizHistory.belongsTo(Quiz);
   User.hasMany(QuizHistory);
   Quiz.hasMany(QuizHistory);
+  User.belongsToMany(Quiz, { through: "Like", as: "LikedQuizzes" });
+  Quiz.belongsToMany(User, { through: "Like", as: "LikedBy" });
 }
 
 module.exports = { applyAssociations };
