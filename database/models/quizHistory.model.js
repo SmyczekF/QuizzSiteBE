@@ -18,5 +18,12 @@ module.exports = (sequelize) => {
       type: DataTypes.DATE,
       defaultValue: DataTypes.NOW,
     },
+    timeLimit: {
+      allowNull: true,
+      type: DataTypes.INTEGER,
+      validate: {
+        min: 0,
+      },
+    },
   });
 };

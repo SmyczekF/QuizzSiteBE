@@ -423,6 +423,7 @@ const validateAnswers = async function (req, res) {
         QuizId: quiz.id,
         UserId: req.session?.user?.id || null,
         finishedOn: new Date(),
+        timeLimit: req.body.timeLimit || null,
       });
       res.send({ score: score, correctAnswers: correctAnswers });
     } else {
