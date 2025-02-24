@@ -105,6 +105,8 @@ const get = async function (req, res) {
       res.status(400).send("Bad request");
       return;
     }
+    const UserId = req.session?.user?.id;
+
     const quiz = await sequelize.models.Quiz.findOne({
       where: {
         id: req.params.quizID,
@@ -128,7 +130,40 @@ const get = async function (req, res) {
           through: { attributes: [] },
         },
       ],
+      attributes: [
+        "id",
+        "title",
+        "description",
+        "color",
+        "createdAt",
+        [
+          sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM "QuizHistories"
+            WHERE "QuizHistories"."QuizId" = "Quiz"."id"
+          )`),
+          "finishCount",
+        ],
+        [
+          sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM "Likes"
+            WHERE "Likes"."QuizId" = "Quiz"."id"
+          )`),
+          "likeCount",
+        ],
+        [
+          sequelize.literal(`(
+            SELECT COUNT(*) > 0
+            FROM "Likes"
+            WHERE "Likes"."QuizId" = "Quiz"."id"
+            AND "Likes"."UserId" = ${UserId || 0}
+          )`),
+          "liked",
+        ],
+      ],
     });
+
     if (quiz) {
       res.send(quiz);
     } else {
