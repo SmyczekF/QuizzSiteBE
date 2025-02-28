@@ -10,7 +10,7 @@ module.exports = (sequelize) => {
     },
     score: {
       allowNull: false,
-      type: DataTypes.INTEGER,
+      type: DataTypes.FLOAT,
       defaultValue: 0,
     },
     finishedOn: {
