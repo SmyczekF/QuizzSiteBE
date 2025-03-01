@@ -106,6 +106,7 @@ const get = async function (req, res) {
       return;
     }
     const UserId = req.session?.user?.id;
+    const isEditContext = req.context?.isEdit;
 
     const quiz = await sequelize.models.Quiz.findOne({
       where: {
@@ -116,7 +117,9 @@ const get = async function (req, res) {
           model: sequelize.models.Question,
           include: {
             model: sequelize.models.Option,
-            attributes: ["id", "text", "order", "image"],
+            attributes: isEditContext
+              ? ["id", "text", "order", "image", "isCorrect"]
+              : ["id", "text", "order", "image"],
           },
         },
         {

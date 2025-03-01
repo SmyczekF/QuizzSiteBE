@@ -13,10 +13,13 @@ const {
   getQuizLikes,
   like,
 } = require("../controllers/quiz.controller.js");
+const canEditQuiz = require("../middlewares/can_edit_quiz.js");
 
 router.get("/get/genre/:genreName", getAll);
 
 router.get("/get/:quizID", get);
+
+router.get("/get/:quizID/edit", canEditQuiz, get);
 
 router.post("/add/", createQuiz);
 
