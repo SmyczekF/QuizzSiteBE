@@ -246,11 +246,20 @@ const updateQuiz = async function (req, res) {
       res.status(400).send("Bad request");
       return;
     }
+
     const quiz = await sequelize.models.Quiz.findOne({
       where: {
         id: req.params.quizID,
       },
     });
+
+    // Allow admin or quiz owner to delete
+    if (
+      !req.session?.user?.role === "admin" &&
+      quiz?.UserId !== req.session?.user?.id
+    ) {
+      return res.status(403).send("Not authorized to update this quiz");
+    }
 
     if (quiz) {
       const updatedQuiz = await sequelize.models.Quiz.update(req.body, {
@@ -318,6 +327,14 @@ const deleteQuiz = async function (req, res) {
       },
     });
 
+    // Allow admin or quiz owner to delete
+    if (
+      !req.session?.user?.role === "admin" &&
+      quiz.UserId !== req.session?.user?.id
+    ) {
+      return res.status(403).send("Not authorized to delete this quiz");
+    }
+
     if (quiz) {
       await sequelize.models.Quiz.destroy({
         where: {
@@ -364,7 +381,7 @@ const calculateScore = function (answers, correctAnswers) {
       score += tempScore / correctAnswerIds.length;
     }
   });
-  return (score / correctAnswers.length) * 100;
+  return Math.round((score / correctAnswers.length) * 10000) / 100;
 };
 
 const validateAnswers = async function (req, res) {

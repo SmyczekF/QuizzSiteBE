@@ -12,6 +12,7 @@ const modelDefiners = [
   require("./models/genre.model"),
   require("./models/quizHistory.model"),
   require("./models/like.model"),
+  require("./models/role.model"),
 ];
 
 for (const modelDefiner of modelDefiners) {

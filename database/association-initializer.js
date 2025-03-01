@@ -1,6 +1,14 @@
 function applyAssociations(sequelize) {
-  const { User, Quiz, Option, Question, Translation, Genre, QuizHistory } =
-    sequelize.models;
+  const {
+    User,
+    Quiz,
+    Option,
+    Question,
+    Translation,
+    Genre,
+    QuizHistory,
+    Role,
+  } = sequelize.models;
 
   Question.hasMany(Option);
   Quiz.hasMany(Question);
@@ -18,6 +26,8 @@ function applyAssociations(sequelize) {
   Quiz.hasMany(QuizHistory);
   User.belongsToMany(Quiz, { through: "Like", as: "LikedQuizzes" });
   Quiz.belongsToMany(User, { through: "Like", as: "LikedBy" });
+  User.belongsTo(Role);
+  Role.hasMany(User);
 }
 
 module.exports = { applyAssociations };

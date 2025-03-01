@@ -17,12 +17,21 @@ const login = async function (req, res) {
       where: {
         username: req.body.username,
       },
+      include: [
+        {
+          model: sequelize.models.Role,
+          attributes: ["name"],
+        },
+      ],
     });
 
     if (user) {
       const match = await bcrypt.compare(req.body.password, user.password);
       if (match && user.activated) {
-        req.session.user = user;
+        req.session.user = {
+          ...user.get({ plain: true }),
+          role: user.Role.name,
+        };
         res.send({ username: user.username });
       } else if (!user.activated) {
         res.status(401).send("User not activated");
@@ -92,12 +101,16 @@ const register = async function (req, res) {
     if (user) {
       res.status(409).send("User with that email already exists");
     } else {
+      const defaultRole = await sequelize.models.Role.findOne({
+        where: { name: "default" },
+      });
       const hash = await bcrypt.hash(req.body.password, 10);
       const newUser = await sequelize.models.User.create({
         username: req.body.username,
         email: req.body.email,
         password: hash,
         activation_token: crypto.randomBytes(32).toString("hex"),
+        RoleId: defaultRole.id, // Assign the default role
       });
       res.send(newUser);
     }
