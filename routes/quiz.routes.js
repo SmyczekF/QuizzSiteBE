@@ -12,6 +12,7 @@ const {
   getQuizFinishes,
   getQuizLikes,
   like,
+  getFavourites,
 } = require("../controllers/quiz.controller.js");
 const canEditQuiz = require("../middlewares/can_edit_quiz.js");
 
@@ -30,6 +31,8 @@ router.delete("/:quizID", deleteQuiz);
 router.post("/finish/:quizID", validateAnswers);
 
 router.get("/finished", getQuizFinishes);
+
+router.get("/favourites", getFavourites);
 
 router.get("liked", getQuizLikes);
 

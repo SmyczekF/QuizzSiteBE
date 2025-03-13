@@ -35,6 +35,7 @@ const getAll = async function (req, res) {
         "description",
         "color",
         "createdAt",
+        "image",
         [
           sequelize.literal(`(
             SELECT COUNT(*)
@@ -611,6 +612,123 @@ const like = async function (req, res) {
   }
 };
 
+const getFavourites = async function (req, res) {
+  try {
+    const orderBy = req.query.order || "finished";
+    const orderDir = req.query.orderDir || "DESC";
+    const page = req.query.page || 1;
+    const limit = req.query.limit || 10;
+    const UserId = req.session?.user?.id;
+
+    const quizzes = await sequelize.models.Quiz.findAll({
+      include: [
+        {
+          model: sequelize.models.User,
+          as: "Author",
+          attributes: ["username", "image"],
+        },
+        {
+          model: sequelize.models.Genre,
+          attributes: ["name"],
+          through: { attributes: [] },
+        },
+        {
+          model: sequelize.models.User,
+          as: "LikedBy", // Use the alias defined in the association
+          where: { id: UserId },
+          attributes: [],
+          through: { attributes: [] }, // Exclude Like attributes from the result
+          required: true, // Only include quizzes that are liked by the user
+        },
+      ],
+      attributes: [
+        "id",
+        "title",
+        "description",
+        "color",
+        "createdAt",
+        "image",
+        [
+          sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM "QuizHistories"
+            WHERE "QuizHistories"."QuizId" = "Quiz"."id"
+          )`),
+          "finishCount",
+        ],
+        [
+          sequelize.literal(`(
+            SELECT COUNT(*)
+            FROM "Likes"
+            WHERE "Likes"."QuizId" = "Quiz"."id"
+          )`),
+          "likeCount",
+        ],
+        [
+          sequelize.literal(`(
+            SELECT COUNT(*) > 0
+            FROM "Likes"
+            WHERE "Likes"."QuizId" = "Quiz"."id"
+            AND "Likes"."UserId" = ${UserId || 0}
+          )`),
+          "liked",
+        ],
+      ],
+      group: [
+        "Quiz.id",
+        "Quiz.title",
+        "Quiz.description",
+        "Quiz.color",
+        "Quiz.createdAt",
+        "Author.id",
+        "Author.username",
+        "Author.image",
+        "Genres.id", // Add Genre.id to the group by clause
+        "Genres.name",
+      ],
+      offset: (page - 1) * limit,
+      limit: limit,
+      order: [
+        [
+          sequelize.col(
+            orderBy === "finished"
+              ? "finishCount"
+              : orderBy === "likes"
+              ? "likeCount"
+              : "createdAt"
+          ),
+          orderDir,
+        ],
+      ],
+      subQuery: false,
+    });
+
+    const totalCount = await sequelize.models.Quiz.count({
+      include: [
+        {
+          model: sequelize.models.User,
+          as: "LikedBy", // Use the alias defined in the association
+          where: { id: UserId },
+          through: { attributes: [] },
+          required: true,
+        },
+        {
+          model: sequelize.models.Genre,
+        },
+      ],
+      distinct: true,
+    });
+
+    res.send({
+      quizzes: quizzes,
+      totalCount: totalCount,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send("Internal server error");
+  }
+};
+
 module.exports = {
   getAll,
   get,
@@ -622,4 +740,5 @@ module.exports = {
   getQuizFinishes,
   getQuizLikes,
   like,
+  getFavourites,
 };
