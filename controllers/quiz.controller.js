@@ -1,5 +1,11 @@
 const sequelize = require("../database/sequelize-initializer");
 
+// Helper function to convert base64 to Buffer
+const base64ToBuffer = (base64String) => {
+  const base64Data = base64String.split(",")[1];
+  return Buffer.from(base64Data, "base64");
+};
+
 const getAll = async function (req, res) {
   try {
     const orderBy = req.query.order || "finished";
@@ -211,18 +217,39 @@ const createQuiz = async function (req, res) {
         res.status(404).send("User not found");
         return;
       }
+
+      let imageData = req.body.image;
+      if (imageData && imageData.startsWith("data:image")) {
+        imageData = base64ToBuffer(imageData);
+      }
+
       const newQuiz = await sequelize.models.Quiz.create({
         ...req.body,
+        image: imageData,
         UserId: user.id,
       });
 
       questions.forEach(async (question) => {
-        const newQuestion = await sequelize.models.Question.create(question);
+        let questionImageData = question.image;
+        if (questionImageData && questionImageData.startsWith("data:image")) {
+          questionImageData = base64ToBuffer(questionImageData);
+        }
+        const newQuestion = await sequelize.models.Question.create({
+          ...question,
+          image: questionImageData,
+        });
         await newQuiz.addQuestion(newQuestion);
 
         const options = question.options;
         options.forEach(async (option) => {
-          const newOption = await sequelize.models.Option.create(option);
+          let optionImageData = option.image;
+          if (optionImageData && optionImageData.startsWith("data:image")) {
+            optionImageData = base64ToBuffer(optionImageData);
+          }
+          const newOption = await sequelize.models.Option.create({
+            ...option,
+            image: optionImageData,
+          });
           await newQuestion.addOption(newOption);
         });
       });
@@ -265,29 +292,51 @@ const updateQuiz = async function (req, res) {
     }
 
     if (quiz) {
-      await sequelize.models.Quiz.update(req.body, {
-        where: {
-          id: req.params.quizID,
-        },
-      });
+      let imageData = req.body.image;
+      if (imageData && imageData.startsWith("data:image")) {
+        imageData = base64ToBuffer(imageData);
+      }
+
+      await sequelize.models.Quiz.update(
+        { ...req.body, image: imageData },
+        {
+          where: {
+            id: req.params.quizID,
+          },
+        }
+      );
 
       const questions = req.body.questions;
       const genres = req.body.genres;
       if (questions) {
         questions.forEach(async (question) => {
-          await sequelize.models.Question.update(question, {
-            where: {
-              id: question.id,
-            },
-          });
+          let questionImageData = question.image;
+          if (questionImageData && questionImageData.startsWith("data:image")) {
+            questionImageData = base64ToBuffer(questionImageData);
+          }
+          await sequelize.models.Question.update(
+            { ...question, image: questionImageData },
+            {
+              where: {
+                id: question.id,
+              },
+            }
+          );
 
           const options = question.options;
           options.forEach(async (option) => {
-            await sequelize.models.Option.update(option, {
-              where: {
-                id: option.id,
-              },
-            });
+            let optionImageData = option.image;
+            if (optionImageData && optionImageData.startsWith("data:image")) {
+              optionImageData = base64ToBuffer(optionImageData);
+            }
+            await sequelize.models.Option.update(
+              { ...option, image: optionImageData },
+              {
+                where: {
+                  id: option.id,
+                },
+              }
+            );
           });
         });
       }
