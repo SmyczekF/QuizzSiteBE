@@ -256,7 +256,7 @@ const updateQuiz = async function (req, res) {
       },
     });
 
-    // Allow admin or quiz owner to delete
+    // Allow admin or quiz owner to update
     if (
       !req.session?.user?.role === "admin" &&
       quiz?.UserId !== req.session?.user?.id
@@ -265,7 +265,7 @@ const updateQuiz = async function (req, res) {
     }
 
     if (quiz) {
-      const updatedQuiz = await sequelize.models.Quiz.update(req.body, {
+      await sequelize.models.Quiz.update(req.body, {
         where: {
           id: req.params.quizID,
         },
@@ -275,40 +275,37 @@ const updateQuiz = async function (req, res) {
       const genres = req.body.genres;
       if (questions) {
         questions.forEach(async (question) => {
-          const updatedQuestion = await sequelize.models.Question.update(
-            question,
-            {
-              where: {
-                id: question.id,
-              },
-            }
-          );
-          updateQuiz.addQuestion(updatedQuestion);
+          await sequelize.models.Question.update(question, {
+            where: {
+              id: question.id,
+            },
+          });
 
           const options = question.options;
           options.forEach(async (option) => {
-            const updatedOption = await sequelize.models.Option.update(option, {
+            await sequelize.models.Option.update(option, {
               where: {
                 id: option.id,
               },
             });
-            updatedQuestion.addOption(updatedOption);
           });
         });
-        res.send(updatedQuiz);
       }
 
       if (genres) {
         genres.forEach(async (genre) => {
-          const updatedGenre = await sequelize.models.Genre.update(genre, {
-            where: {
-              id: genre.id,
-            },
-          });
-          updatedQuiz.addGenre(updatedGenre);
+          const [newGenre, created] = await sequelize.models.Genre.findOrCreate(
+            {
+              where: {
+                name: genre,
+              },
+              defaults: { name: genre },
+            }
+          );
+          await quiz.addGenre(newGenre);
         });
-        res.send(updatedQuiz);
       }
+      res.status(200).send("Quiz updated successfully");
     } else {
       res.status(404).send("Quiz not found");
     }
